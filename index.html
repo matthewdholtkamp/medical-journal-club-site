@@ -25,7 +25,7 @@
 </div>
 <script>
 async function askFollowUps(topic) {
-  const response = await fetch('/.netlify/functions/chatgpt-proxy', {
+  const response = await fetch('/.netlify/functions/gemini-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt: topic, operation: 'followups' })
@@ -35,7 +35,7 @@ async function askFollowUps(topic) {
 }
 
 async function getSummary(prompt) {
-  const response = await fetch('/.netlify/functions/chatgpt-proxy', {
+  const response = await fetch('/.netlify/functions/gemini-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt: prompt, operation: 'summary' })
@@ -45,7 +45,7 @@ async function getSummary(prompt) {
 }
 
 async function getKeyPoints(prompt) {
-  const response = await fetch('/.netlify/functions/chatgpt-proxy', {
+  const response = await fetch('/.netlify/functions/gemini-proxy', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ prompt: prompt, operation: 'keypoints' })
@@ -65,21 +65,16 @@ document.getElementById('submit').onclick = async () => {
   const questionArea = document.getElementById('questionArea');
   const summaryArea = document.getElementById('summaryArea');
   const buttonsArea = document.getElementById('buttonsArea');
-
   questionArea.classList.remove('hidden');
   summaryArea.classList.remove('hidden');
-
   questionArea.innerHTML = '<h2 class="text-xl font-roboto-condensed text-orange-400 mb-2">Follow-up questions</h2><p>Loading...</p>';
   const followups = await askFollowUps(topic);
   questionArea.innerHTML = '<h2 class="text-xl font-roboto-condensed text-orange-400 mb-2">Follow-up questions</h2><pre>' + followups + '</pre>';
-
   summaryArea.innerHTML = '<h2 class="text-xl font-roboto-condensed text-orange-400 mb-2">Journal Club Summary</h2><p>Generating summary...</p>';
   const summary = await getSummary(topic);
   summaryArea.innerHTML = '<h2 class="text-xl font-roboto-condensed text-orange-400 mb-2">Journal Club Summary</h2><pre>' + summary + '</pre>';
-
   const keyPoints = await getKeyPoints(topic);
   buttonsArea.classList.remove('hidden');
-
   document.getElementById('audioDownload').onclick = () => {
     generateAudio(summary);
   };
