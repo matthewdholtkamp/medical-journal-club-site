@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Medical Literature Summarizer</title>
+</head>
+<body>
+<h1>Medical Literature Summarizer</h1>
+<label for="topic">Enter your medical question or topic:</label>
+<input type="text" id="topic" size="60">
+<button id="submit">Submit</button>
+<div id="questionArea"></div>
+<div id="summaryArea"></div>
+<button id="audioDownload" style="display:none;">Download Lecture Audio</button>
+<button id="keyDownload" style="display:none;">Download Key Points</button>
+<script>
+const apiKey = 'YOUR_OPENAI_API_KEY_HERE';
+async function askFollowUps(topic) {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+    body: JSON.stringify({
+      model: 'gpt-5',
+      messages: [
+        { role: 'system', content: 'You are an expert medical researcher who helps refine a question into five clarifying questions. Return five numbered follow-up questions to narrow the search scope.' },
+        { role: 'user', content: topic }
+      ],
+      max_tokens: 200
+    })
+  });
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+async function getSummary(prompt) {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+    body: JSON.stringify({
+      model: 'gpt-5',
+      messages: [
+        { role: 'system', content: 'You are a medical research assistant that searches up-to-date, reputable literature from PubMed, NEJM, JAMA and guidelines. Produce a multi-page journal club summary (introduction, methods, results, discussion) with APA citations.' },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 2000
+    })
+  });
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+async function getKeyPoints(prompt) {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json','Authorization':'Bearer ' + apiKey },
+    body: JSON.stringify({
+      model: 'gpt-5',
+      messages: [
+        { role: 'system', content: 'You are a medical assistant that summarizes research into high‑yield key points.' },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 500
+    })
+  });
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+async function generateAudio(text) {
+  const utterance = new SpeechSynthesisUtterance('Hello, I am Dr. Matthew Holtkamp. ' + text);
+  speechSynthesis.speak(utterance);
+  // Note: Additional implementation is needed to save the audio as a downloadable file.
+}
+document.getElementById('submit').onclick = async () => {
+  const topic = document.getElementById('topic').value;
+  document.getElementById('questionArea').innerText = 'Loading follow-up questions...';
+  const followups = await askFollowUps(topic);
+  document.getElementById('questionArea').innerHTML = '<h2>Follow-up questions</h2><pre>' + followups + '</pre>';
+  document.getElementById('summaryArea').innerText = 'Generating summary...';
+  const summary = await getSummary(topic);
+  document.getElementById('summaryArea').innerHTML = '<h2>Journal Club Summary</h2><pre>' + summary + '</pre>';
+  const key = await getKeyPoints(topic);
+  const audioBtn = document.getElementById('audioDownload');
+  audioBtn.style.display = 'inline';
+  audioBtn.onclick = () => {
+    generateAudio(summary);
+  };
+  const keyBtn = document.getElementById('keyDownload');
+  keyBtn.style.display = 'inline';
+  keyBtn.onclick = () => {
+    const blob = new Blob([key], { type:'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'key_points.txt';
+    link.click();
+  };
+};
+</script>
+</body>
+</html>
