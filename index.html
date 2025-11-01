@@ -24,63 +24,39 @@
 </div>
 </div>
 <script>
-const apiKey = 'YOUR_OPENAI_API_KEY_HERE';
-
 async function askFollowUps(topic) {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('/.netlify/functions/chatgpt-proxy', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-    body: JSON.stringify({
-      model: 'gpt-5',
-      messages: [
-        { role: 'system', content: 'You are an expert medical researcher who helps refine a question into five clarifying questions. Return five numbered follow-up questions to narrow the search scope.' },
-        { role: 'user', content: topic }
-      ],
-      max_tokens: 200
-    })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: topic, operation: 'followups' })
   });
   const data = await response.json();
-  return data.choices[0].message.content.trim();
+  return data.result.trim();
 }
 
 async function getSummary(prompt) {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('/.netlify/functions/chatgpt-proxy', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-    body: JSON.stringify({
-      model: 'gpt-5',
-      messages: [
-        { role: 'system', content: 'You are a medical research assistant that searches up-to-date, reputable literature from PubMed, NEJM, JAMA and guidelines. Produce a multi-page journal club summary (introduction, methods, results, discussion) with APA citations.' },
-        { role: 'user', content: prompt }
-      ],
-      max_tokens: 2000
-    })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: prompt, operation: 'summary' })
   });
   const data = await response.json();
-  return data.choices[0].message.content.trim();
+  return data.result.trim();
 }
 
 async function getKeyPoints(prompt) {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+  const response = await fetch('/.netlify/functions/chatgpt-proxy', {
     method: 'POST',
-    headers: { 'Content-Type':'application/json','Authorization':'Bearer ' + apiKey },
-    body: JSON.stringify({
-      model: 'gpt-5',
-      messages: [
-        { role: 'system', content: 'You are a medical assistant that summarizes research into high‑yield key points.' },
-        { role: 'user', content: prompt }
-      ],
-      max_tokens: 500
-    })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt: prompt, operation: 'keypoints' })
   });
   const data = await response.json();
-  return data.choices[0].message.content.trim();
+  return data.result.trim();
 }
 
 async function generateAudio(text) {
   const utterance = new SpeechSynthesisUtterance('Hello, I am Dr. Matthew Holtkamp. ' + text);
   speechSynthesis.speak(utterance);
-  // Note: To provide downloadable audio, additional client-side implementation or server support is required.
 }
 
 document.getElementById('submit').onclick = async () => {
